@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import './App.css';
 import socketIOClient from 'socket.io-client';
-const socket = socketIOClient(process.env.REACT_APP_BACKEND_URL + ':' + process.env.REACT_APP_PORT);
+const socket = socketIOClient(process.env.REACT_APP_BACKEND_URL + ':' + process.env.REACT_APP_BACKEND_PORT);
 
 
 function SideBar() {
@@ -25,7 +25,7 @@ function SideBar() {
     return (
         <div className='sidebar'>
             <h2>Online</h2>
-            {listItems.length != 0 ?
+            {listItems.length !== 0 ?
                 <ul className='players'>{listItems}</ul>
                 :
                 <p style={{textAlign:'center'}}>Nobody is ready to play yet.</p>

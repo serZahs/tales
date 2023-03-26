@@ -73,8 +73,8 @@ io.on('connection', (socket) => {
     });
 });
 
-http.listen(process.env.PORT || 3001, function() {
-    console.log('Now listening on port 3001');
+http.listen(5000, function() {
+    console.log('The server is now listening.');
 });
 
 function getNamedClients(clients) {
