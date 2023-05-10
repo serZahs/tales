@@ -3,7 +3,7 @@ const ServerEvents = {
     CONNECTION: 'connection',
 
     // Custom events
-    UPDATE_USERS: 'UpdateUsers',
+    UPDATE_PLAYERS: 'UpdatePlayers',
     WAKE_UP: 'WakeUp',
     SEND_THEME: 'SendTheme',
     STORY_COMPLETE: 'StoryComplete',

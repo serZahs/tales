@@ -18,70 +18,76 @@ class Client {
 }
 
 class GameState {
-    constructor(themes, clients, players_done) {
+    constructor(themes, players, players_done) {
         this.themes = themes;
-        this.clients = clients;
+        this.players = players;
         this.players_done = players_done; 
     }
 }
 
 function HandleConnections(game_state) {
-    let clients = game_state.clients;
+    let players = game_state.players;
 
     io.on(events.ServerEvents.CONNECTION, (socket) => {
         socket.on(events.ClientEvents.DISCONNECT, () => {
             console.log(`${socket.id} disconnected.`);
-            //Remove from list of clients
-            let index = FindByProperty(clients, 'id', socket.id);
-            clients.splice(index, 1);
-            io.emit(events.ServerEvents.UPDATE_USERS, clients);
+            let index = FindByProperty(players, 'id', socket.id);
+            if (index != -1) {
+                players.splice(index, 1);
+                io.emit(events.ServerEvents.UPDATE_PLAYERS, players);
+            }
         });
 
         console.log(`${socket.id} connected.`);
-        io.emit(events.ServerEvents.UPDATE_USERS, clients);
-        clients.push(new Client(
-            socket.id,
-            null,
-            null,
-            0
-        ));
+        if (players.length > 0) {
+            io.emit(events.ServerEvents.UPDATE_PLAYERS, players);
+        }
         
         socket.on(events.ClientEvents.GAME_START, () => {
-            if (clients.length != 1) {
+            if (players.length > 0) {
                 io.emit(events.ServerEvents.WAKE_UP);
                 io.emit(events.ServerEvents.SEND_THEME, GetTheme(game_state));
             }
         });
 
         socket.on(events.ClientEvents.NAME, (name) => {
-            let index = FindByProperty(clients, 'id', socket.id);
-            clients[index].name = name;
-            io.emit(events.ServerEvents.UPDATE_USERS, clients);
+            let index = FindByProperty(players, 'id', socket.id);
+            if (index != -1) {
+                players[index].name = name;
+            } else {
+                players.push(new Client(
+                    socket.id,
+                    name,
+                    null,
+                    0
+                ));
+            }
+            io.emit(events.ServerEvents.UPDATE_PLAYERS, players);
         });
 
         socket.on(events.ClientEvents.STORY, (story) => {
-            let index = FindByProperty(clients, 'id', socket.id);
-            clients[index].story = story;
-            game_state.players_done+=1;
-            const namedClients = GetNamedClients(clients);
-            if (game_state.players_done==namedClients.length) {
-                io.emit(events.ServerEvents.STORY_COMPLETE, clients);
+            let index = FindByProperty(players, 'id', socket.id);
+            players[index].story = story;
+            game_state.players_done++;
+
+            if (game_state.players_done == players.length) {
+                io.emit(events.ServerEvents.STORY_COMPLETE, players);
                 game_state.players_done = 0;
             }
         });
 
         socket.on(events.ClientEvents.POINTS, id => {
-            let index = FindByProperty(clients, 'id', id);
-            clients[index].points += 1;
-            io.emit(events.ServerEvents.UPDATE_USERS, clients);
+            let index = FindByProperty(players, 'id', id);
+            players[index].points += 1;
+            io.emit(events.ServerEvents.UPDATE_PLAYERS, players);
         });
 
         socket.on(events.ClientEvents.RESET, () => {
-            clients.forEach(c => {
+            players.forEach(c => {
                 c.story = null;
                 c.points = 0;
             });
-            io.emit(events.ServerEvents.UPDATE_USERS, clients);
+            io.emit(events.ServerEvents.UPDATE_PLAYERS, players);
             io.emit(events.ServerEvents.HOME);
         });
     });
@@ -119,10 +125,6 @@ Main();
 function GetTheme(game_state) {
     let themes = game_state.themes;
     return themes[Math.floor(Math.random()*themes.length)];
-}
-
-function GetNamedClients(clients) {
-    return clients.filter(c => c.name !== null);
 }
 
 function FindByProperty(array, attr, value) {

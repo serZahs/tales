@@ -8,7 +8,7 @@ const socket = socketIOClient(process.env.REACT_APP_BACKEND_URL + ':' + process.
 function SideBar() {
     let [clients, setClients] = useState([]);
     useEffect(() => {
-        socket.on(ServerEvents.UPDATE_USERS, clients => {
+        socket.on(ServerEvents.UPDATE_PLAYERS, clients => {
             setClients(clients);
         });
     });
@@ -25,7 +25,7 @@ function SideBar() {
     );
     return (
         <div className='sidebar'>
-            <h2>Online</h2>
+            <h2>Players</h2>
             {listItems.length !== 0 ?
                 <ul className='players'>{listItems}</ul>
                 :
@@ -192,12 +192,12 @@ function HomeScreen() {
                     <div>
                         <p>
                             It's all about trying to write the funniest story.
-                            Everyone gets the same theme, so your storytelling abilities
+                            Everyone gets the same prompt, so your storytelling abilities
                             are what matter.
                         </p>
                         <p>
                             Start by picking a name. 
-                            At least two players need to have joined to start a game.
+                            At least two players are recommended, or it could get lonely.
                         </p>
                     </div>
                 </div>
