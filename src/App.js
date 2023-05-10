@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import './App.css';
 import socketIOClient from 'socket.io-client';
+import { ServerEvents, ClientEvents } from './events';
 const socket = socketIOClient(process.env.REACT_APP_BACKEND_URL + ':' + process.env.REACT_APP_BACKEND_PORT);
 
 
 function SideBar() {
     let [clients, setClients] = useState([]);
     useEffect(() => {
-        socket.on('updateUsers', clients => {
+        socket.on(ServerEvents.UPDATE_USERS, clients => {
             setClients(clients);
         });
     });
@@ -36,7 +37,7 @@ function SideBar() {
 
 function StartGame() {
     function handleClick() {
-        socket.emit('gameStart');
+        socket.emit(ClientEvents.GAME_START);
     }
     return (
         <input type="button" value="Start" onClick={handleClick} className='button-primary' />
@@ -49,7 +50,7 @@ function NameForm() {
         setName(event.target.value);
     }
     function handleSubmit(event) {
-        socket.emit('name', name);
+        socket.emit(ClientEvents.NAME, name);
         event.preventDefault();
     }
     return (
@@ -65,7 +66,7 @@ function NameForm() {
 function Theme() {
     let [theme, setTheme] = useState(null);
     useEffect(() => {
-        socket.on('sendTheme', (data) => {
+        socket.on(ServerEvents.SEND_THEME, (data) => {
             setTheme(data);
         });
     });
@@ -86,7 +87,7 @@ function StoryForm() {
         setValue(event.target.value);
     }
     function handleSubmit(event) {
-        socket.emit('story', value);
+        socket.emit(ClientEvents.STORY, value);
         setDisabled(true);
         event.preventDefault();
     }
@@ -106,17 +107,17 @@ function StoryForm() {
 function Voting({ clients, newRound }) {
     let [disabled, setDisabled] = useState(false);
     useEffect(() => {
-        socket.on('wakeUp', () => {
+        socket.on(ServerEvents.WAKE_UP, () => {
             newRound();
         });
     });
 
     function handleVoteClick(id) {
         setDisabled(true);
-        socket.emit('points', id);
+        socket.emit(ClientEvents.POINTS, id);
     }
     function handleNewRoundClick() {
-        socket.emit('gameStart');
+        socket.emit(ClientEvents.GAME_START);
     }
     return (
         <div className='voting'>
@@ -145,11 +146,11 @@ function GameScreen() {
     let [voting, setVoting] = useState(false);
     let [clients, setClients] = useState([]);
     useEffect(() => {
-        socket.on('storyComplete', clients => {
+        socket.on(ServerEvents.STORY_COMPLETE, clients => {
             setClients(clients);
             startVoting();
         });
-        socket.on('wakeUp', () => {
+        socket.on(ServerEvents.WAKE_UP, () => {
             newRound();
         });
     });
@@ -213,7 +214,7 @@ function MainScreen({ gameHidden }) {
 export default function MyApp() {
     let [gameHidden, setGameHidden] = useState(true);
     useEffect(() => {
-        socket.on('wakeUp', () => {
+        socket.on(ServerEvents.WAKE_UP, () => {
             setGameHidden(false);
         });
     });

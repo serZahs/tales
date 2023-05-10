@@ -4,6 +4,7 @@ const path = require('path');
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 const fs = require('fs');
+const events = require('../src/events');
 
 var clients = []; 
 
@@ -24,17 +25,17 @@ app.get('/', function(req, res) {
     res.send("<h1>If you've reached this page it means something broke!</h1>");
 });
 
-io.on('connection', (socket) => {
-    socket.on('disconnect', () => {
+io.on(events.ServerEvents.CONNECTION, (socket) => {
+    socket.on(events.ClientEvents.DISCONNECT, () => {
         console.log('The user at ' + socket.id + ' disconnected.');
         //Remove from list of clients
         let index = findWithAttr(clients, 'id', socket.id);
         clients.splice(index, 1);
-        io.emit('updateUsers', clients);
+        io.emit(events.ServerEvents.UPDATE_USERS, clients);
     });
 
     console.log('A user at ' + socket.id + ' connected.');
-    io.emit('updateUsers', clients);
+    io.emit(events.ServerEvents.UPDATE_USERS, clients);
     clients.push({
         id: socket.id,
         name: null,
@@ -42,34 +43,34 @@ io.on('connection', (socket) => {
         points: 0,
     });
     
-    socket.on('gameStart', () => {
+    socket.on(events.ClientEvents.GAME_START, () => {
         if (clients.length != 1) {
-            io.emit('wakeUp');
-            io.emit('sendTheme', themes[Math.floor(Math.random()*themes.length)]);
+            io.emit(events.ServerEvents.WAKE_UP);
+            io.emit(events.ServerEvents.SEND_THEME, themes[Math.floor(Math.random()*themes.length)]);
         }
     });
 
-    socket.on('name', (name) => {
+    socket.on(events.ClientEvents.NAME, (name) => {
         let index = findWithAttr(clients, 'id', socket.id);
         clients[index].name = name;
-        io.emit('updateUsers', clients);
+        io.emit(events.ServerEvents.UPDATE_USERS, clients);
     });
 
-    socket.on('story', (story) => {
+    socket.on(events.ClientEvents.STORY, (story) => {
         let index = findWithAttr(clients, 'id', socket.id);
         clients[index].story = story;
         usersComplete+=1;
         const namedClients = getNamedClients(clients);
         if (usersComplete==namedClients.length) {
-            io.emit('storyComplete', clients);
+            io.emit(events.ServerEvents.STORY_COMPLETE, clients);
             usersComplete = 0;
         }
     });
 
-    socket.on('points', id => {
+    socket.on(events.ClientEvents.POINTS, id => {
         let index = findWithAttr(clients, 'id', id);
         clients[index].points += 1;
-        io.emit('updateUsers', clients);
+        io.emit(events.ServerEvents.UPDATE_USERS, clients);
     });
 });
 
