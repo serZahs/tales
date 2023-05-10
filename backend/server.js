@@ -17,9 +17,16 @@ class Client {
     }
 }
 
-function HandleConnections() {
-    let clients = [];
-    let usersComplete = 0;
+class GameState {
+    constructor(themes, clients, players_done) {
+        this.themes = themes;
+        this.clients = clients;
+        this.players_done = players_done; 
+    }
+}
+
+function HandleConnections(game_state) {
+    let clients = game_state.clients;
 
     io.on(events.ServerEvents.CONNECTION, (socket) => {
         socket.on(events.ClientEvents.DISCONNECT, () => {
@@ -42,7 +49,7 @@ function HandleConnections() {
         socket.on(events.ClientEvents.GAME_START, () => {
             if (clients.length != 1) {
                 io.emit(events.ServerEvents.WAKE_UP);
-                io.emit(events.ServerEvents.SEND_THEME, themes[Math.floor(Math.random()*themes.length)]);
+                io.emit(events.ServerEvents.SEND_THEME, GetTheme(game_state));
             }
         });
 
@@ -55,11 +62,11 @@ function HandleConnections() {
         socket.on(events.ClientEvents.STORY, (story) => {
             let index = FindByProperty(clients, 'id', socket.id);
             clients[index].story = story;
-            usersComplete+=1;
+            game_state.players_done+=1;
             const namedClients = GetNamedClients(clients);
-            if (usersComplete==namedClients.length) {
+            if (game_state.players_done==namedClients.length) {
                 io.emit(events.ServerEvents.STORY_COMPLETE, clients);
-                usersComplete = 0;
+                game_state.players_done = 0;
             }
         });
 
@@ -68,6 +75,15 @@ function HandleConnections() {
             clients[index].points += 1;
             io.emit(events.ServerEvents.UPDATE_USERS, clients);
         });
+
+        socket.on(events.ClientEvents.RESET, () => {
+            clients.forEach(c => {
+                c.story = null;
+                c.points = 0;
+            });
+            io.emit(events.ServerEvents.UPDATE_USERS, clients);
+            io.emit(events.ServerEvents.HOME);
+        });
     });
 }
 
@@ -75,12 +91,13 @@ function Main() {
     const static_path = path.join(__dirname, '../build');
     const themes_path = path.join(__dirname, './themes.json');
 
-    let themes = [];
+    let game_state = new GameState([], [], 0);
+
     fs.readFile(themes_path, 'utf-8', (error, data) => {
         if(error) {
             throw new Error("Could not load themes.json");
         } else {
-            themes = JSON.parse(data);
+            game_state.themes = JSON.parse(data);
         }
     });
     
@@ -94,10 +111,15 @@ function Main() {
         console.log('The server is now listening.');
     });
 
-    HandleConnections();
+    HandleConnections(game_state);
 }
 
 Main();
+
+function GetTheme(game_state) {
+    let themes = game_state.themes;
+    return themes[Math.floor(Math.random()*themes.length)];
+}
 
 function GetNamedClients(clients) {
     return clients.filter(c => c.name !== null);

@@ -6,7 +6,8 @@ const ServerEvents = {
     UPDATE_USERS: 'UpdateUsers',
     WAKE_UP: 'WakeUp',
     SEND_THEME: 'SendTheme',
-    STORY_COMPLETE: 'StoryComplete'
+    STORY_COMPLETE: 'StoryComplete',
+    HOME: 'Home'
 };
 
 const ClientEvents = {
@@ -16,7 +17,8 @@ const ClientEvents = {
     GAME_START: 'GameStart',
     NAME: 'Name',
     STORY: 'Story',
-    POINTS: 'Points'
+    POINTS: 'Points',
+    RESET: 'Reset'
 };
 
 module.exports = {

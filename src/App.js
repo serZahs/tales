@@ -119,6 +119,9 @@ function Voting({ clients, newRound }) {
     function handleNewRoundClick() {
         socket.emit(ClientEvents.GAME_START);
     }
+    function handleEndGameClick() {
+        socket.emit(ClientEvents.RESET);
+    }
     return (
         <div className='voting'>
             <h1>Results</h1>
@@ -138,6 +141,7 @@ function Voting({ clients, newRound }) {
                 )}
             </ul>
             <input type='button' value='New round' onClick={handleNewRoundClick} className='button-primary' />
+            <input type='button' value='End game' onClick={handleEndGameClick} className='button-voting' />
         </div>
     );
 }
@@ -216,6 +220,9 @@ export default function MyApp() {
     useEffect(() => {
         socket.on(ServerEvents.WAKE_UP, () => {
             setGameHidden(false);
+        });
+        socket.on(ServerEvents.HOME, () => {
+            setGameHidden(true);
         });
     });
     return (
