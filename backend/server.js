@@ -1,6 +1,7 @@
 "use strict";
 
 const express = require('express');
+const cors = require('cors')
 const app = express();
 const path = require('path');
 const http = require('http').createServer(app);
@@ -96,6 +97,7 @@ function HandleConnections(game_state) {
 function Main() {
     const static_path = path.join(__dirname, '../build');
     const themes_path = path.join(__dirname, './themes.json');
+    const env_path = path.join(__dirname, '../.env')
 
     let game_state = new GameState([], [], 0);
 
@@ -106,6 +108,14 @@ function Main() {
             game_state.themes = JSON.parse(data);
         }
     });
+
+    require('dotenv').config({path: env_path});
+    if (process.env.ENVIRONMENT !== "dev") {
+        let cors_options = {
+            origin: process.env.CORS_OPTIONS
+        }
+        app.use(cors(cors_options))
+    }
     
     app.use(express.static(static_path));
 
